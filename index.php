@@ -12,12 +12,30 @@ function get_initial_cookies($cookies)
 	$curl = curl_init('http://pikabu.ru');
 	curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 	curl_setopt($curl, CURLOPT_COOKIEJAR, dirname(__FILE__) . '/' . $cookies);
-	curl_exec_and_close($curl);
+	return curl_exec_and_close($curl);
+}
+
+function get_session_from_cookies($cookies)
+{
+	// http://stackoverflow.com/questions/410109/php-reading-a-cookie-file
+
+	$lines = file(dirname(__FILE__) . '/' . $cookies);
+	foreach ($lines as $line)
+	{
+		if ($line[0] != '#' && substr_count($line, "\t") == 6)
+		{
+			$tokens = array_map('trim', explode("\t", $line));
+			if ($tokens[5] == 'PHPSESS')
+				return $tokens[6];
+		}
+	}
+	die('Session not found!');
 }
 
 function log_in($initial_cookies, $session, $username, $password, $response_cookies)
 {
 	$curl = curl_init('http://pikabu.ru/ajax/auth.php');
+	curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 
 	{
 		$header[0] = 'X-Csrf-Token: ' . $session;
@@ -35,6 +53,20 @@ function log_in($initial_cookies, $session, $username, $password, $response_cook
 		'username'=>$username
 	));
 
+	return curl_exec_and_close($curl);
+}
+
+$cookies_file = 'cookies.txt';
+
+get_initial_cookies($cookies_file);
+sleep(1);
+
+log_in($cookies_file, get_session_from_cookies($cookies_file), '', '', $cookies_file);
+sleep(1);
+
+{
+	$curl = curl_init('http://pikabu.ru');
+	curl_setopt($curl, CURLOPT_COOKIEFILE, dirname(__FILE__) . '/' . $cookies_file);
 	curl_exec_and_close($curl);
 }
 
