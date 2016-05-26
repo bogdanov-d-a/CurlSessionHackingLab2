@@ -61,7 +61,7 @@ $cookies_file = 'cookies.txt';
 get_initial_cookies($cookies_file);
 sleep(1);
 
-log_in($cookies_file, get_session_from_cookies($cookies_file), '', '', $cookies_file);
+log_in($cookies_file, get_session_from_cookies($cookies_file), $_GET['username'], $_GET['password'], $cookies_file);
 sleep(1);
 
 {
