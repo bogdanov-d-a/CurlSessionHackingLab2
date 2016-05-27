@@ -73,6 +73,32 @@ function get_first_story_id()
 				return $link->getAttribute('data-story-id');
 		}
 	}
+
+	die('Story not found!');
+}
+
+function post_comment($cookies, $session, $story_id, $comment)
+{
+	$curl = curl_init('http://pikabu.ru/ajax/comments_actions.php');
+	curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+
+	{
+		$header[0] = 'X-Csrf-Token: ' . $session;
+		curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+	}
+
+	curl_setopt($curl, CURLOPT_COOKIEFILE, dirname(__FILE__) . '/' . $cookies);
+
+	curl_setopt($curl, CURLOPT_POST, 1);
+	curl_setopt($curl, CURLOPT_POSTFIELDS, array(
+		'action'=>'create',
+		'story_id'=>$story_id,
+		'desc'=>$comment,
+		'images'=>'[]',
+		'parent_id'=>'0'
+	));
+
+	return curl_exec_and_close($curl);
 }
 
 $cookies_file = 'cookies.txt';
@@ -80,13 +106,16 @@ $cookies_file = 'cookies.txt';
 get_initial_cookies($cookies_file);
 sleep(1);
 
-log_in($cookies_file, get_session_from_cookies($cookies_file), $_GET['username'], $_GET['password'], $cookies_file);
+$session_id = get_session_from_cookies($cookies_file);
+
+log_in($cookies_file, $session_id, $_GET['username'], $_GET['password'], $cookies_file);
 sleep(1);
 
-{
-	$curl = curl_init('http://pikabu.ru');
-	curl_setopt($curl, CURLOPT_COOKIEFILE, dirname(__FILE__) . '/' . $cookies_file);
-	curl_exec_and_close($curl);
-}
+$story_id = get_first_story_id();
+sleep(1);
+
+post_comment($cookies_file, $session_id, $story_id, $_GET['comment']);
+
+echo($story_id);
 
 ?>
