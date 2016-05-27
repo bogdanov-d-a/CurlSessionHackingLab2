@@ -1,5 +1,7 @@
 <?php
 
+include('simple_html_dom.php');
+
 function curl_exec_and_close($curl)
 {
 	$result = curl_exec($curl);
@@ -54,6 +56,23 @@ function log_in($initial_cookies, $session, $username, $password, $response_cook
 	));
 
 	return curl_exec_and_close($curl);
+}
+
+function get_first_story_id()
+{
+	$html = file_get_html('http://pikabu.ru');
+	$skipped_ad = false;
+
+	foreach ($html->find('div') as $link)
+	{
+		if ($link->getAttribute('class') == 'story')
+		{
+			if (!$skipped_ad)
+				$skipped_ad = true;
+			else
+				return $link->getAttribute('data-story-id');
+		}
+	}
 }
 
 $cookies_file = 'cookies.txt';
